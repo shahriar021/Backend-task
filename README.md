@@ -10,4 +10,4 @@
 
 ### http://localhost:3000//:itineraryId
 
-#### hellow
+![images](./screenshots/isAuthenticated.png)
