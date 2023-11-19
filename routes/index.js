@@ -9,11 +9,6 @@ const isAuthenticated = require("../auth/isAuthenticated");
 
 dotenv.config();
 
-/* GET home page. */
-// router.get("/", function (req, res, next) {
-//   res.render("index", { title: "Express" });
-// });
-
 // SIGNUP
 router.post("/signup", async (req, res) => {
   try {
@@ -78,29 +73,118 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/allData", isAuthenticated, async function (req, res) {
+const userId = "6558ccfdffa6d66456abbccc";
+const userWithItineraries = jwtModel.findById(userId).populate("itineraries");
+
+//
+// router.get("/createItinerary", async function (req, res) {
+//   let itinerary = await itineraryModel.create({
+//     name: "jamil",
+//     destinations: "dhaka",
+//     activities: "boat,hiking",
+//     transportation_details: "car",
+//     accommodation_details: "hmmmm",
+//     user: req.userId,
+//   });
+
+//   res.send(itinerary);
+// });
+
+// Create a travel itinerary
+router.post("/createItinerary", isAuthenticated, async (req, res) => {
   try {
-    let allData = await jwtModel.findOne({
-      username: "shah",
+    const user = await jwtModel.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const newItinerary = await itineraryModel.create({
+      ...req.body,
+      user: user._id,
     });
-    res.send(allData);
-  } catch {
-    res.status(401).json({
-      error: "not authenticated..",
-    });
+
+    user.itineraries.push(newItinerary._id);
+    await user.save();
+
+    res.status(201).json(newItinerary);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-router.get("/createItinerary", async function (req, res) {
-  let itinerary = await itineraryModel.create({
-    name: "jamil",
-    destinations: "dhaka",
-    activities: "boat,hiking",
-    transportation_details: "car",
-    accommodation_details: "hmmmm",
-  });
+router.put("/:itineraryId", isAuthenticated, async (req, res) => {
+  try {
+    const updatedItinerary = await Itinerary.findOneAndUpdate(
+      { _id: req.params.itineraryId, user: req.userId },
+      { $set: req.body },
+      { new: true }
+    );
 
-  res.send(itinerary);
+    if (!updatedItinerary) {
+      return res
+        .status(404)
+        .json({ message: "Itinerary not found or unauthorized" });
+    }
+
+    res.status(200).json(updatedItinerary);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.delete("/:itineraryId", isAuthenticated, async (req, res) => {
+  try {
+    const deletedItinerary = await Itinerary.findOneAndDelete({
+      _id: req.params.itineraryId,
+      user: req.userId,
+    });
+
+    if (!deletedItinerary) {
+      return res
+        .status(404)
+        .json({ message: "Itinerary not found or unauthorized" });
+    }
+
+    res.status(200).json({ message: "Itinerary deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// Retrieve list of itineraries for a user
+router.get("/user", isAuthenticated, async (req, res) => {
+  try {
+    const userItineraries = await Itinerary.find({ user: req.userId });
+    res.status(200).json(userItineraries);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// Retrieve details of a specific itinerary
+router.get("/:itineraryId", isAuthenticated, async (req, res) => {
+  try {
+    const itineraryDetails = await Itinerary.findOne({
+      _id: req.params.itineraryId,
+      user: req.userId,
+    });
+
+    if (!itineraryDetails) {
+      return res
+        .status(404)
+        .json({ message: "Itinerary not found or unauthorized" });
+    }
+
+    res.status(200).json(itineraryDetails);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 module.exports = router;

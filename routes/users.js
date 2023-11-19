@@ -17,6 +17,7 @@ const authSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  itineraries: [{ type: mongoose.Types.ObjectId, ref: "itinerary" }],
 });
 
 module.exports = mongoose.model("user", authSchema);
