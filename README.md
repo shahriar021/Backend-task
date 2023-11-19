@@ -34,6 +34,8 @@ Before you begin, ensure you have met the following requirements:
 
 ```
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/your-database-name
+MONGODB_URI=mongodb://localhost:27017/travelItinerary
 JWT_SECRET=your-secret-key
 ```
+
+
